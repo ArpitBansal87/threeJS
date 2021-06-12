@@ -1,2 +1,5 @@
 three.js-master.zip
 /three.js-master
+/Initial Code Library
+*/node_modules*
+04-webpack/node_modules/*
