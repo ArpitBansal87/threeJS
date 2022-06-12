@@ -1,6 +1,8 @@
 import './style.css'
 import * as THREE from 'three'
 import * as dat from 'lil-gui'
+import gsap from 'gsap'
+
 
 /**
  * Debug
@@ -15,6 +17,7 @@ gui
     .addColor(parameters, 'materialColor')
     .onChange(() => {
         meshMaterial.color.set(parameters.materialColor)
+        particlesMaterial.color.set(parameters.materialColor)
     })
 
 /**
@@ -66,6 +69,33 @@ mesh3.position.x = 2
 scene.add(mesh1, mesh2, mesh3)
 
 const sectionMeshes = [mesh1, mesh2, mesh3]
+
+/**
+ * Particles
+ */
+// Geometry
+const particlesCount = 200
+const positions = new Float32Array(particlesCount * 3)
+
+for (let i = 0; i < particlesCount; i++) {
+    positions[i * 3 + 0] = (Math.random() - 0.5) * 10
+    positions[i * 3 + 1] = objectDistance * 0.5 - Math.random() * objectDistance * sectionMeshes.length
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 10
+}
+
+const particleGeometry = new THREE.BufferGeometry()
+particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+
+// Material
+const particlesMaterial = new THREE.PointsMaterial({
+    color: parameters.materialColor,
+    sizeAttenuation: true,
+    size: 0.03
+})
+
+// Points
+const particles = new THREE.Points(particleGeometry, particlesMaterial)
+scene.add(particles)
 
 /**
  * Lights
@@ -122,9 +152,26 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
  * Scroll
  */
 let scrollY = window.scrollY
+let currentSection = 0
 
 window.addEventListener('scroll', () => {
     scrollY = window.scrollY
+
+    const newSection = Math.round(scrollY / sizes.height)
+    if (newSection != currentSection) {
+        currentSection = newSection
+
+        gsap.to(
+            sectionMeshes[currentSection].rotation,
+            {
+                duration: 1.5,
+                ease: 'power2.inOut',
+                x: '+=6',
+                y: '+=3',
+                z: '+=1.5'
+            }
+        )
+    }
 })
 
 /**
@@ -137,8 +184,6 @@ cursor.y = 0
 window.addEventListener('mousemove', (event) => {
     cursor.x = event.clientX / sizes.width - 0.5
     cursor.y = event.clientY / sizes.height - 0.5
-
-    console.log(cursor.x)
 })
 
 /**
@@ -154,8 +199,8 @@ const tick = () => {
 
     // Animate Meshes
     for (const mesh of sectionMeshes) {
-        mesh.rotation.x = elapsedTime * 0.2
-        mesh.rotation.y = elapsedTime * 0.12
+        mesh.rotation.x += deltaTime * 0.2
+        mesh.rotation.y += deltaTime * 0.12
     }
 
     //Animate Camera
